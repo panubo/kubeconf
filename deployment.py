@@ -4,12 +4,11 @@ import jinja2
 
 class Mount(object):
 
-    read_only = 'false'
-
-    def __init__(self, name, internal, external):
+    def __init__(self, name, internal, external, read_only='false'):
         self.name = name
         self.internal = internal
         self.external = external
+        self.read_only = read_only
 
 
 class HttpLivenessProbe(object):
@@ -31,39 +30,38 @@ class DeploymentManager(object):
 
 class Deployment(object):
 
-    environment = {}
-    replicas = 1
-    deployment_key = None
-    mounts = []
-    always_pull = False
-
-    service_port = None
-
-    cpu_limit = None
-    memory_limit = None
-
-    node_port = None
-
-    command = None
-
     def __init__(self, service_name, docker_image):
+        # self.mounts = []
         self.service_name = service_name
         self.docker_image = docker_image
+
+        # mutable variables
+        self.environment = {}
+        self.replicas = 1
+        self.deployment_key = None
+        self.mounts = []
+        self.always_pull = False
+        self.service_port = None
+        self.cpu_limit = None
+        self.memory_limit = None
+        self.node_port = None
+        self.command = None
 
     def add_mount(self, *args):
         self.mounts.append(Mount(*args))
 
-    def render_raw(self, context, template):
+    @staticmethod
+    def render_raw(context, template):
         template_loader = jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__))
         template_env = jinja2.Environment(loader=template_loader)
         template = template_env.get_template(template)
         return template.render(context=context)
 
     def render_service(self):
-        return self.render_raw(self, template='service.template')
+        return self.render_raw(context=self, template='service.template')
 
     def render_rc(self):
-        return self.render_raw(self, template='rc.template')
+        return self.render_raw(context=self, template='rc.template')
 
     def write_yaml(self):
         with open(os.path.join('generated', "%s-rc.yaml" % self.service_name), "w") as text_file:
@@ -75,12 +73,11 @@ class Deployment(object):
 
 class WebApp(Deployment):
 
-    http_check = None
-
-    def __init__(self, service_name, host_names, docker_image, service_port=8000, add_www=True):
+    def __init__(self, service_name, host_names, docker_image, service_port=8000, add_www=True, http_check=None):
         self.host_names = host_names
         self.service_port = service_port
         self.add_www = add_www
+        self.http_check = http_check
         super(self.__class__, self).__init__(service_name, docker_image)
 
     @property
