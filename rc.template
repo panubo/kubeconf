@@ -24,7 +24,7 @@ spec:
           {% for item in service.command -%}
           - "{{ item }}"
           {% endfor -%}
-        {% endif -%}
+        {% endif %}
         {% if service.always_pull -%}
         imagePullPolicy: Always
         {% else %}
