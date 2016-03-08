@@ -1,0 +1,84 @@
+{% set service = context %}
+# Generated File - DO NOT EDIT
+
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: {{ service.service_name }}
+  labels:
+    name: {{ service.service_name }}
+spec:
+  replicas: {{ service.replicas }}
+  selector:
+    name: {{ service.service_name }}
+  template:
+    metadata:
+      labels:
+        name: {{ service.service_name }}
+    spec:
+      containers:
+      - name: {{ service.service_name }}
+        image: {{ service.docker_image }}
+        {% if service.always_pull -%}
+        imagePullPolicy: Always
+        {% else %}
+        imagePullPolicy: IfNotPresent
+        {% endif -%}
+        {% if service.http_check is defined and service.http_check is not none -%}
+        livenessProbe:
+          httpGet:
+            path: {{ service.http_check.path }}
+            port: {{ service.http_check.port }}
+            scheme: HTTP
+          initialDelaySeconds: {{ service.http_check.delay }}
+          timeoutSeconds: {{ service.http_check.timeout }}
+        {% endif -%}
+        {% if service.deployment_key is not none -%}
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "install -m 0600 /root/secrets/key /root/.ssh/id_rsa"
+        {% endif -%}
+        env:
+        {%- for key, value in service.environment.iteritems() %}
+        - name: {{ key }}
+          value: '{{ value }}'
+        {%- endfor %}
+        ports:
+        - containerPort: {{ service.service_port }}
+          name: port-{{ service.service_port }}
+          protocol: TCP
+        {%- if service.memory_limit is not none or service.cpu_limit is not none %}
+        resources:
+          limits:
+            {% if service.cpu_limit is not none %}cpu: {{ service.cpu_limit }}m{% endif %}
+            {% if service.memory_limit is not none %}memory: {{ service.memory_limit}}Mi{% endif %}
+        {%- endif %}
+        volumeMounts:
+        {%- for mount in service.mounts %}
+        - name: {{ mount.name }}
+          readOnly: {{ mount.read_only }}
+          mountPath: {{ mount.internal }}
+        {%- endfor -%}
+        {% if service.deployment_key is not none %}
+        - name: deployment-key
+          readOnly: true
+          mountPath: /root/secrets
+        {%- endif %}
+
+      volumes:
+      {%- for mount in service.mounts %}
+      - name: {{ mount.name }}
+        hostPath:
+          path: "{{ mount.external }}"
+      {%- endfor -%}
+      {%- if service.deployment_key is not none %}
+      - name: deployment-key
+        secret:
+          secretName: {{ service.deployment_key }}
+      {% endif %}
+
+---

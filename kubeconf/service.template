@@ -1,0 +1,24 @@
+{% set service = context %}
+# Generated File - DO NOT EDIT
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ service.service_name }}
+  labels:
+    name: {{ service.service_name }}
+spec:
+  {% if service.node_port is not none -%}
+  type: NodePort {{ service.node_port }}
+  {% endif -%}
+  selector:
+    name: {{ service.service_name }}
+  ports:
+  - name: port-{{ service.service_port }}
+    port: {{ service.service_port }}
+    {% if service.node_port is not none -%}
+    nodePort: {{ service.node_port }}
+    {% endif -%}
+    protocol: TCP
+
+---

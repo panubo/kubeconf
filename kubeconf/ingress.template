@@ -1,0 +1,20 @@
+{% set service = context %}
+# Generated File - DO NOT EDIT
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ service.service_name }}
+spec:
+  rules:
+  {% for host in service.get_host_names %}
+  - host: {{ host }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: {{ service.service_name }}
+          servicePort: {{ service.service_port }}
+  {% endfor %}
+
+---
