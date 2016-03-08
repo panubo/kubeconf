@@ -37,10 +37,14 @@ class Deployment(object):
     mounts = []
     always_pull = False
 
+    service_port = None
+
     cpu_limit = None
     memory_limit = None
 
     node_port = None
+
+    command = None
 
     def __init__(self, service_name, docker_image):
         self.service_name = service_name
@@ -64,8 +68,9 @@ class Deployment(object):
     def write_yaml(self):
         with open(os.path.join('generated', "%s-rc.yaml" % self.service_name), "w") as text_file:
             text_file.write(self.render_rc())
-        with open(os.path.join('generated', "%s-service.yaml" % self.service_name), "w") as text_file:
-            text_file.write(self.render_service())
+        if self.service_port is not None:
+            with open(os.path.join('generated', "%s-service.yaml" % self.service_name), "w") as text_file:
+                text_file.write(self.render_service())
 
 
 class WebApp(Deployment):

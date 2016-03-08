@@ -19,6 +19,12 @@ spec:
       containers:
       - name: {{ service.service_name }}
         image: {{ service.docker_image }}
+        {% if service.command is not none -%}
+        command:
+          {% for item in service.command -%}
+          - "{{ item }}"
+          {% endfor -%}
+        {% endif -%}
         {% if service.always_pull -%}
         imagePullPolicy: Always
         {% else %}
@@ -47,10 +53,12 @@ spec:
         - name: {{ key }}
           value: '{{ value }}'
         {%- endfor %}
+        {% if service.service_port is not none -%}
         ports:
         - containerPort: {{ service.service_port }}
           name: port-{{ service.service_port }}
           protocol: TCP
+        {% endif -%}
         {%- if service.memory_limit is not none or service.cpu_limit is not none %}
         resources:
           limits:
