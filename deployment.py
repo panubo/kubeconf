@@ -74,11 +74,11 @@ class Deployment(object):
 class WebApp(Deployment):
 
     def __init__(self, service_name, host_names, docker_image, service_port=8000, add_www=True, http_check=None):
+        super(self.__class__, self).__init__(service_name, docker_image)
         self.host_names = host_names
         self.service_port = service_port
         self.add_www = add_www
         self.http_check = http_check
-        super(self.__class__, self).__init__(service_name, docker_image)
 
     @property
     def get_host_names(self):
@@ -102,9 +102,9 @@ class WebApp(Deployment):
 class NetworkService(Deployment):
 
     def __init__(self, service_name, docker_image, service_port, external_port=None):
+        super(self.__class__, self).__init__(service_name, docker_image)
         self.service_port = service_port
 
         if external_port is not None:
             self.node_port = external_port
 
-        super(self.__class__, self).__init__(service_name, docker_image)
