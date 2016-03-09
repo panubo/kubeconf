@@ -47,8 +47,8 @@ class Deployment(object):
         self.node_port = None
         self.command = None
 
-    def add_mount(self, *args):
-        self.mounts.append(Mount(*args))
+    def add_mount(self, *args, **kwargs):
+        self.mounts.append(Mount(*args, **kwargs))
 
     @staticmethod
     def render_raw(context, template):
