@@ -39,20 +39,15 @@ spec:
           initialDelaySeconds: {{ service.http_check.delay }}
           timeoutSeconds: {{ service.http_check.timeout }}
         {% endif -%}
-        {% if service.deployment_key is not none -%}
-        lifecycle:
-          postStart:
-            exec:
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "install -m 0600 /root/secrets/key /root/.ssh/id_rsa"
-        {% endif -%}
         env:
         {%- for key, value in service.environment.iteritems() %}
         - name: {{ key }}
           value: '{{ value }}'
         {%- endfor %}
+        {% if service.deployment_key is not none -%}
+        - name: GIT_SSH
+          value: /opt/extra-bin/git_ssh.sh
+        {% endif -%}
         {% if service.service_port is not none -%}
         ports:
         - containerPort: {{ service.service_port }}
@@ -75,6 +70,9 @@ spec:
         - name: deployment-key
           readOnly: true
           mountPath: /root/secrets
+        - mountPath: /opt/extra-bin
+          name: extra-bin
+          readOnly: true
         {%- endif %}
 
       volumes:
@@ -87,6 +85,9 @@ spec:
       - name: deployment-key
         secret:
           secretName: {{ service.deployment_key }}
+      - hostPath:
+          path: /mnt/data00/extra_bin
+        name: extra-bin
       {% endif %}
 
 ---
